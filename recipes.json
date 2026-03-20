@@ -1,0 +1,74 @@
+{
+  "folders": [
+    "Desserts",
+    "Main Dishes"
+  ],
+  "recipes": [
+    {
+      "name": "No-Bake Energy Bites",
+      "description": "",
+      "image": "https://www.allrecipes.com/thmb/ixhIaK0nYffO1kh39nlG6E5ZLwU=/1500x0/filters:no_upscale():max_bytes(150000):strip_icc()/AR-239969-no-bake-energy-bites-Beauty-4x3-f64cb80523be4d2280df2d442d160dce.jpg",
+      "folder": "Desserts",
+      "servings": "24 servings",
+      "prep_time": "15",
+      "cook_time": "",
+      "ingredients": "1 cup rolled oats\n1/2 cup miniature semisweet chocolate chips\n1/2 cup ground flax seed\n1/2 cup crunchy peanut butter\n1/3 cup honey\n1 teaspoon vanilla extract",
+      "instructions": "Gather all ingredients.\nStir oats, chocolate chips, flax seed, peanut butter, honey, and vanilla extract together in a bowl.\nRoll dough into 24 balls with your hands. Arrange balls on a baking sheet and freeze until set, about 1 hour.\nServe and enjoy!",
+      "source_url": "https://www.allrecipes.com/recipe/239969/no-bake-energy-bites/",
+      "tags": []
+    },
+    {
+      "name": "Peanut Butter Chocolate Chip Cookies",
+      "description": "",
+      "image": "https://handletheheat.com/wp-content/uploads/2023/06/peanut-butter-chocolate-chip-cookies-SQUARE.jpg",
+      "folder": "Desserts",
+      "servings": "24 servings",
+      "prep_time": "10",
+      "cook_time": "12",
+      "ingredients": "2 1/2 cups (318 grams) bleached all-purpose flour, (measured correctly*)\n1 teaspoon baking soda\n1 teaspoon baking powder\n1 teaspoon fine sea salt\n1 stick (113 grams) unsalted butter\n3/4 cup (202 grams) creamy peanut butter**\n1/2 cup (100 grams) granulated sugar\n1 cup (200 grams) packed dark brown sugar\n2 large eggs plus 1 egg yolk, ( at room temperature)\n2 teaspoons vanilla\n2 cups (340 grams) semisweet chocolate chips",
+      "instructions": "Preheat oven to 350ºF. Line baking sheets with parchment paper.\nIn a medium bowl, whisk together the flour, baking soda, baking powder, and salt.\nIn a large heat-safe bowl, microwave the butter until melted. Vigorously stir the peanut butter into the hot butter until well combined. Stir in the granulated sugar and brown sugar until well combined. Add the eggs and yolk, one at a time, stirring well after each addition. Add in the vanilla. Gradually stir in the flour mixture until just combined. Stir in the chocolate chips.\nDough may be loose and slightly crumbly. It will not appear like normal chocolate chip cookie dough. If it's unbearably crumbly, that's likely due to discrepancies among brands of peanut butter and if you used unbleached flour. Add 2 tablespoons milk if that's the case.\nOPTIONAL: If time permits, cover the dough in plastic wrap and refrigerate for at least 24 hours but no more than 72 hours. Let the dough sit at room temperature just until it is soft enough to scoop.\nDivide the dough into 3-tablespoon sized balls using a large spring-loaded cookie scoop and drop onto prepared baking sheets. Flatten dough slightly into disc shapes with your palms. Dot each disc with a few extra chocolate chips for picture-perfect cookies.\nBake for 12 minutes, or until golden brown. Let cool for 5 minutes before removing to wire racks to cool completely.\nCookies can be stored in an airtight container at room temperature for up to 3 days.",
+      "source_url": "https://handletheheat.com/peanut-butter-chocolate-chip-cookies/"
+    },
+    {
+      "name": "Creamy Tuscan Chicken",
+      "description": "",
+      "image": "https://hips.hearstapps.com/hmg-prod/images/creamy-tuscan-chicken-index-6583ac66027fc.jpeg?crop=0.566xw:1.00xh;0.218xw,0&resize=1200:*",
+      "folder": "Main Dishes",
+      "servings": "4 servings",
+      "prep_time": "10",
+      "cook_time": "",
+      "ingredients": "1 tbsp. extra-virgin olive oil\n4 boneless skinless chicken breasts\nKosher salt\nFreshly ground black pepper\n1 tsp. dried oregano\n3 tbsp. butter\n3 cloves garlic, minced\n1 1/2 c. cherry tomatoes, halved\n3 c. baby spinach\n1/2 c. heavy cream\n1/4 c. freshly grated Parmesan\nLemon wedges, for serving",
+      "instructions": "In a skillet over medium heat, heat oil. Add chicken and season with salt, pepper, and oregano. Cook until browned on both sides and an instant-read thermometer inserted into the thickest part of the breast reads 165°, 8 minutes per side. Remove from skillet and set aside.\nIn the same skillet over medium heat, melt butter. Stir in garlic and cook until fragrant, about 1 minute. Add cherry tomatoes and season with salt and pepper. Cook until tomatoes are beginning to burst then add spinach and cook until spinach is beginning to wilt.\nStir in heavy cream and parmesan and bring mixture to a simmer. Reduce heat to low and simmer until sauce is slightly reduced, about 3 minutes. Return chicken to skillet and cook until heated through, 5 to 7 minutes.\nServe with lemon wedges.",
+      "source_url": "https://www.delish.com/cooking/recipe-ideas/a19636089/creamy-tuscan-chicken-recipe/",
+      "tags": []
+    },
+    {
+      "name": "Stuffed Peppers - Veggie Stuffed",
+      "description": "",
+      "image": "https://carlahall.com/wp-content/uploads/2023/09/easy-vegan-stuffed-pepper-735x735.jpg",
+      "folder": "Main Dishes",
+      "servings": "4 servings",
+      "prep_time": "",
+      "cook_time": "",
+      "ingredients": "4 large orange bell peppers\nOlive oil\n1/2 cup diced onion\n1/2 cup diced carrot\n2 cloves garlic, minced\n1 cup diced zucchini\n1 teaspoon ground cumin\n1 teaspoon paprika\n1/2 teaspoon turmeric\nSalt and pepper to taste\n1 cup diced tomatoes\n1 can (15 ounce) chickpeas, drained and rinsed\n1 cup cooked quinoa\n1 cup grated vegan cheese\n1lb ground hamburger",
+      "instructions": "Preheat your oven to 375°F.\nUsing a sharp knife, slice off the tops of each bell pepper. Reserve the tops.\nCarefully remove all the seeds and veins from inside each pepper. Rinse and pat dry with a paper towel. Use a small paring knife to cut out the holes on the exterior of the peppers to make the jack-o-lantern faces.\nIn a large skillet, heat a drizzle of olive oil over medium heat. Add the diced onion and carrot. Sauté for about 3-4 minutes until they start to soften.\nAdd the diced zucchini and minced garlic to the skillet. Cook for an additional 2-3 minutes.\nStir in the ground cumin, paprika, turmeric, salt, and pepper. Cook for another minute until the spices are fragrant.\nAdd the diced tomatoes and chickpeas to the skillet. Cook for 5-6 minutes, allowing the flavors to meld together.\nRemove the skillet from the heat and stir in the cooked quinoa. Add ½ cup of cheese with the quinoa and mix well. Adjust seasoning if needed.\nCarefully stuff each bell pepper with the vegetable and chickpea mixture, pressing it down gently as you fill them.\nSprinkle the rest of the cheese on top of the peppers.\nPlace the stuffed peppers in a baking dish. If the peppers don't stand upright, you can slice a small portion off the bottom to create a flat surface.\nCover the baking dish with aluminum foil and bake in the preheated oven for about 25-30 minutes, or until the peppers are tender.\nRemove the foil and bake for an additional 5-10 minutes, or until the cheese is melted and slightly golden.\nOnce the peppers are done, carefully remove them from the oven and let them cool for a few minutes before serving.\nServe the stuffed peppers as a main dish, garnished with fresh herbs like chopped parsley or cilantro if desired.",
+      "source_url": "https://carlahall.com/easy-vegan-stuffed-peppers-recipe/",
+      "tags": []
+    },
+    {
+      "name": "Ridiculously Good Air Fryer Salmon",
+      "description": "",
+      "image": "https://pinchofyum.com/tachyon/Air-Fryer-Salmon-3.jpg",
+      "folder": "Main Dishes",
+      "servings": "4 servings",
+      "prep_time": "5",
+      "cook_time": "8",
+      "ingredients": "1 lb. salmon (see note 1)\n1 tablespoon brown sugar\n1 teaspoon paprika\n1 teaspoon smoked paprika\n1/2 teaspoon chili powder\n1 teaspoon onion powder\n1/2 teaspoon garlic powder\n1 teaspoon cornstarch\n3/4 teaspoon coarse kosher salt (or 1/2 teaspoon table salt)\n2-3 teaspoons avocado or olive oil",
+      "instructions": "Prep the salmon\nRemove the skin from your salmon, if it has skin. Pat with paper towels so the surface is mostly dry. Cut your salmon into cubes, 1 to 2 inches each (see photo).\nPrep the spices\nMix the spices together in a small bowl.\nToss salmon with spices\nToss your salmon cubes in the spices and oil – I usually use my hands to mix it all together.\nAir fry the salmon\nPlace your salmon pieces in the air fryer (I just dump them right in) and spread them out a bit so they’re not laying all over each other. Air fry at 400 degrees for 8 minutes!\nYou're Done! Yum!\nAt this point it should be textured and golden on the outside, and juicy and delicious on the inside. When you press each piece with a fork, they should easily flake / slip apart with a buttery, juicy texture inside. (You can do 6-7 minutes if you prefer more of a medium doneness.)",
+      "source_url": "https://pinchofyum.com/air-fryer-salmon",
+      "tags": [
+        "air fryer"
+      ]
+    }
+  ]
+}
