@@ -1,0 +1,4 @@
+recipes.json
+__pycache__/
+*.pyc
+.streamlit/
