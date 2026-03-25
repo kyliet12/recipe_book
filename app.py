@@ -34,7 +34,12 @@ def main() -> None:
     if query_folder:
         st.session_state.selected_folder = query_folder
 
-    data = load_data()
+    if "recipe_data" not in st.session_state:
+        with st.spinner("Fetching recipes from Google..."):
+            st.session_state.recipe_data = load_data()
+
+    # Use the session state instead of calling the function every time
+    data = st.session_state.recipe_data
 
     render_sidebar(data)
 
