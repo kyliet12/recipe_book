@@ -58,7 +58,13 @@ def show_recipe_detail(data: dict) -> None:
 
     if selected_recipe.get("ingredients"):
         st.subheader("Ingredients")
-        st.text(format_ingredients_for_display(selected_recipe["ingredients"]))
+        
+        # Split the string by newlines and create a checkbox for each!
+        ingredient_lines = selected_recipe["ingredients"].split('\n')
+        for i, line in enumerate(ingredient_lines):
+            if line.strip():
+                # The unique key is required so Streamlit tracks each box separately
+                st.checkbox(line.strip(), key=f"ingredient_{selected_idx}_{i}")
 
     if selected_recipe.get("instructions"):
         st.subheader("Instructions")

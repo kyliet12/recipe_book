@@ -1,11 +1,12 @@
 import streamlit as st
+import random
 
 from grocery_helpers import build_grocery_list
 
 
 def show_grocery_list(data: dict) -> None:
     """Build a grocery list from selected recipes."""
-    st.title("🛒 Grocery List")
+    st.title("Grocery List")
 
     if "grocery_list_items" not in st.session_state:
         st.session_state.grocery_list_items = {}
@@ -29,11 +30,26 @@ def show_grocery_list(data: dict) -> None:
         recipe_labels.append(label)
         recipe_lookup[label] = recipe
 
-    selected_labels = st.multiselect(
-        "Select recipes to include",
-        options=recipe_labels,
-        default=recipe_labels,
-    )
+    # Selecting recipes to include in the grocery list
+    if "grocery_selected_recipes" not in st.session_state:
+        st.session_state.grocery_selected_recipes = recipe_labels
+
+    col_multi, col_btn = st.columns([4, 1], vertical_alignment="bottom")
+    with col_btn:
+        # The button randomly samples 3 recipes and updates the session state
+        if st.button("🎲 Surprise Me!", use_container_width=True, help="Pick 3 random recipes"):
+            if len(recipe_labels) >= 3:
+                st.session_state.grocery_selected_recipes = random.sample(recipe_labels, 3)
+            else:
+                st.session_state.grocery_selected_recipes = recipe_labels
+                
+    with col_multi:
+        # 3. Bind the multiselect to the session state using the 'key' parameter
+        selected_labels = st.multiselect(
+            "Select recipes to include",
+            options=recipe_labels,
+            key="grocery_selected_recipes", 
+        )
 
     if not selected_labels:
         st.warning("Select at least one recipe to generate a grocery list.")
