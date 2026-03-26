@@ -1,7 +1,6 @@
 from pathlib import Path
-from typing import Any
-import uuid
-
+import cloudinary
+import cloudinary.uploader
 import pandas as pd
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
@@ -56,30 +55,30 @@ def save_data(data: dict) -> None:
     conn.update(spreadsheet=SHEET_URL, worksheet="recipes", data=df)
     st.cache_data.clear() # Force clear the cache so the next load is completely fresh
 
-def save_uploaded_image(uploaded_file: Any) -> str:
-    """
-    Saves an uploaded image (from st.file_uploader or Gemini API) 
-    to the static folder and returns the relative file path.
-    """
-    if uploaded_file is None:
-        raise ValueError("No image provided.")
 
-    # Generate a unique ID for the filename
-    file_id = uuid.uuid4().hex[:8]
-    
-    # Try to keep the original extension, default to .jpg
+def refresh_folders(data: dict) -> None:
+    """Keep the in-memory folder list in sync with current recipes."""
+    data["folders"] = sorted({r.get("folder", "") for r in data.get("recipes", []) if r.get("folder")})
+
+def save_uploaded_image(uploaded_file) -> str:
+    """
+    Uploads an image file to Cloudinary and returns the permanent public URL.
+    """
     try:
-        ext = uploaded_file.name.split(".")[-1].lower()
-    except AttributeError:
-        ext = "jpg"
+        # 1. Authenticate with your secrets
+        cloudinary.config(
+            cloud_name = st.secrets["cloudinary"]["cloud_name"],
+            api_key = st.secrets["cloudinary"]["api_key"],
+            api_secret = st.secrets["cloudinary"]["api_secret"],
+            secure = True
+        )
         
-    filename = f"{file_id}.{ext}"
-    filepath = STATIC_DIR / filename
-    
-    # Write the bytes to the static folder
-    with open(filepath, "wb") as f:
-        f.write(uploaded_file.getbuffer())
+        # 2. Upload the file bytes directly to Cloudinary
+        # We use .getvalue() to get the raw bytes from the Streamlit file uploader
+        upload_result = cloudinary.uploader.upload(uploaded_file.getvalue())
         
-    # Return the path as a string (e.g., "static/a1b2c3d4.jpg")
-    # Native st.image() can read this directly from the local disk
-    return str(filepath.as_posix())
+        # 3. Return the secure HTTPS link provided by Cloudinary
+        return upload_result["secure_url"]
+        
+    except Exception as e:
+        raise ValueError(f"Failed to upload image to Cloudinary: {e}")

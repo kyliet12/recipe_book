@@ -95,3 +95,23 @@ def format_instructions_for_display(instructions_text: str) -> str:
         return "\n".join(lines)
 
     return "\n".join(f"- {line}" for line in lines)
+
+def clean_time_string(time_str: str) -> str:
+    """Converts ISO 8601 durations (like PT1H30M) to human-readable strings (1 hr 30 mins)."""
+    if not time_str or not isinstance(time_str, str) or not time_str.startswith('PT'):
+        return time_str  # Return it as-is if it already looks normal
+
+    # Extract hours and minutes using regex
+    match = re.match(r'PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?', time_str)
+    if not match:
+        return time_str
+
+    hours, minutes, seconds = match.groups()
+    parts = []
+    
+    if hours:
+        parts.append(f"{hours} hr{'s' if int(hours) > 1 else ''}")
+    if minutes:
+        parts.append(f"{minutes} min{'s' if int(minutes) > 1 else ''}")
+        
+    return " ".join(parts) if parts else time_str

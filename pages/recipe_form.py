@@ -1,6 +1,6 @@
 import streamlit as st
 
-from data_helpers import save_data, save_uploaded_image
+from data_helpers import refresh_folders, save_data, save_uploaded_image
 from formatting_helpers import normalize_ingredient_input
 from scraping_helpers import scrape_recipe_from_image, scrape_recipe_from_url
 
@@ -20,7 +20,7 @@ def _render_recipe_fields(
     # Folder
     ###
     folder_options = data["folders"].copy() if data.get("folders") else []
-    folder_options.append("➕ Create new folder...")
+    folder_options.append("Create new folder...")
     
     default_folder = prefill.get("folder", "")
     if default_folder in folder_options:
@@ -37,7 +37,7 @@ def _render_recipe_fields(
     )
     final_folder_name = ""
 
-    if selected_dropdown_folder == "➕ Create new folder...":
+    if selected_dropdown_folder == "Create new folder...":
         # If they chose to create a new one, get the name from this text box
         new_folder_name = st.text_input(
             "Enter New Folder Name *", 
@@ -53,15 +53,15 @@ def _render_recipe_fields(
         name = st.text_input("Recipe Name *", value=prefill.get("name", ""))
         description = st.text_area("Description", value=prefill.get("description", ""), height=80)
         image = st.text_input(
-            "Image URL or local path",
+            "Image URL",
             value=prefill.get("image", ""),
             placeholder="https://example.com/recipe-image.jpg",
         )
-        uploaded_image = st.file_uploader(
-            uploader_label,
-            type=["png", "jpg", "jpeg", "gif", "webp"],
-            accept_multiple_files=False,
-        )
+        # uploaded_image = st.file_uploader(
+        #     uploader_label,
+        #     type=["png", "jpg", "jpeg", "gif", "webp"],
+        #     accept_multiple_files=False,
+        # )
 
         col1, col2, col3 = st.columns(3)
         servings = col1.text_input("Servings", value=prefill.get("servings", ""))
@@ -79,6 +79,7 @@ def _render_recipe_fields(
             value=prefill.get("instructions", ""),
             height=200,
         )
+        notes = st.text_area("Notes / Tips", value=prefill.get("notes", ""), height=100, placeholder="Storage info, substitutions, etc.")
         source_url = st.text_input("Source URL (optional)", value=prefill.get("source_url", ""))
         tags_input = st.text_input(
             "Tags (comma-separated) - e.g. soup, crock pot, sheet pan, bowl",
@@ -100,13 +101,14 @@ def _render_recipe_fields(
         "name": name,
         "description": description,
         "image": image,
-        "uploaded_image": uploaded_image,
+        # "uploaded_image": uploaded_image,
         "folder": final_folder_name,
         "servings": servings,
         "prep_time": prep_time,
         "cook_time": cook_time,
         "ingredients": ingredients,
         "instructions": instructions,
+        "notes": notes,
         "source_url": source_url,
         "tags_input": tags_input,
     }
@@ -123,15 +125,16 @@ def _prepare_recipe_payload(values: dict, *, folder_error_message: str) -> tuple
     cook_time_clean = values["cook_time"].strip() if isinstance(values["cook_time"], str) else ""
     ingredients_clean = normalize_ingredient_input(values["ingredients"].strip()) if isinstance(values["ingredients"], str) else ""
     instructions_clean = values["instructions"].strip() if isinstance(values["instructions"], str) else ""
+    notes_clean = values["notes"].strip() if isinstance(values.get("notes"), str) else ""
     source_url_clean = values["source_url"].strip() if isinstance(values["source_url"], str) else ""
     tags_clean = [tag.strip().lower() for tag in values["tags_input"].split(",") if tag.strip()] if isinstance(values["tags_input"], str) else []
 
-    uploaded_image = values.get("uploaded_image")
-    if uploaded_image is not None:
-        try:
-            image_clean = save_uploaded_image(uploaded_image)
-        except ValueError as exc:
-            return None, [str(exc)]
+    # uploaded_image = values.get("uploaded_image")
+    # if uploaded_image is not None:
+    #     try:
+    #         image_clean = save_uploaded_image(uploaded_image)
+    #     except ValueError as exc:
+    #         return None, [str(exc)]
 
     errors = []
     if not name_clean:
@@ -152,6 +155,7 @@ def _prepare_recipe_payload(values: dict, *, folder_error_message: str) -> tuple
         "prep_time": prep_time_clean,
         "cook_time": cook_time_clean,
         "ingredients": ingredients_clean,
+        "notes": notes_clean,
         "instructions": instructions_clean,
         "source_url": source_url_clean,
         "tags": tags_clean,
@@ -161,7 +165,7 @@ def _prepare_recipe_payload(values: dict, *, folder_error_message: str) -> tuple
 
 def show_add_recipe(data: dict) -> None:
     """Form to add a new recipe (manual or via URL)."""
-    st.title("➕ Add New Recipe")
+    st.title("Add New Recipe")
 
     method = st.radio(
         "How would you like to add the recipe?",
@@ -225,7 +229,7 @@ def show_add_recipe(data: dict) -> None:
         data=data,
         form_key="recipe_form",
         submit_label="💾 Save Recipe",
-        uploader_label="Or upload an image file (saved to local images folder)",
+        uploader_label="Or upload an image file (will be securely hosted and saved to the recipe)",
         include_cancel=False,
     )
 
@@ -241,6 +245,7 @@ def show_add_recipe(data: dict) -> None:
         else:
             assert recipe is not None
             data["recipes"].append(recipe)
+            refresh_folders(data)
             save_data(data)
             st.session_state.prefill = {}
             st.success(f"✅ '{recipe['name']}' saved to '{recipe['folder']}'!")
@@ -269,7 +274,7 @@ def show_edit_recipe(data: dict) -> None:
         data=data,
         form_key="edit_recipe_form",
         submit_label="💾 Save Changes",
-        uploader_label="Or upload a new image file (saved to local images folder)",
+        uploader_label="Or upload a new image file (will be securely hosted and saved to the recipe)",
         include_cancel=True,
     )
 
@@ -289,6 +294,7 @@ def show_edit_recipe(data: dict) -> None:
         else:
             assert updated_recipe is not None
             data["recipes"][recipe_idx] = updated_recipe
+            refresh_folders(data)
             save_data(data)
             st.success(f"✅ '{updated_recipe['name']}' updated!")
             st.session_state.page = "browse"

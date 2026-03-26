@@ -3,3 +3,10 @@ enableStaticServing = true
 
 [client]
 showSidebarNavigation = false
+
+[theme]
+primaryColor = "#8A2BE2"
+backgroundColor = "#1E1E1E"
+secondaryBackgroundColor = "#2D2D2D"
+textColor = "#E0E0E0"
+font = "sans serif"

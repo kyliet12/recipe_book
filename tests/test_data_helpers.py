@@ -63,3 +63,49 @@ class TestSaveUploadedImage:
 
         path = self._call(tmp_path, _NoNameFile())
         assert path.endswith(".jpg")
+
+
+class TestRefreshFolders:
+    def test_builds_sorted_unique_folder_list(self):
+        import data_helpers
+
+        data = {
+            "recipes": [
+                {"name": "A", "folder": "Dinner"},
+                {"name": "B", "folder": "Breakfast"},
+                {"name": "C", "folder": "Dinner"},
+            ],
+            "folders": [],
+        }
+
+        data_helpers.refresh_folders(data)
+
+        assert data["folders"] == ["Breakfast", "Dinner"]
+
+    def test_ignores_blank_or_missing_folder_values(self):
+        import data_helpers
+
+        data = {
+            "recipes": [
+                {"name": "A", "folder": ""},
+                {"name": "B"},
+                {"name": "C", "folder": "Lunch"},
+            ],
+            "folders": ["Old Folder"],
+        }
+
+        data_helpers.refresh_folders(data)
+
+        assert data["folders"] == ["Lunch"]
+
+    def test_sets_empty_folder_list_when_no_recipe_folders_exist(self):
+        import data_helpers
+
+        data = {
+            "recipes": [{"name": "A", "folder": ""}, {"name": "B"}],
+            "folders": ["Dessert"],
+        }
+
+        data_helpers.refresh_folders(data)
+
+        assert data["folders"] == []

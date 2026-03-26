@@ -6,7 +6,7 @@ from ui_helpers import recipe_anchor_id, render_recipe_thumbnail_grid
 
 def show_search(data: dict) -> None:
     """Search recipes by title or ingredient."""
-    st.title("🔍 Search Recipes")
+    st.title("Search Recipes")
 
     search_type = st.radio(
         "Search by:",

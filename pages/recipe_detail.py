@@ -1,6 +1,6 @@
 import streamlit as st
 
-from data_helpers import save_data
+from data_helpers import refresh_folders, save_data
 from formatting_helpers import format_ingredients_for_display, format_instructions_for_display
 from ui_helpers import get_query_param_value, recipe_anchor_id
 
@@ -28,7 +28,7 @@ def show_recipe_detail(data: dict) -> None:
         st.warning("That recipe could not be found.")
         return
 
-    st.title(f"🍽️ {selected_recipe.get('name', 'Recipe')}")
+    st.title(f"{selected_recipe.get('name', 'Recipe')}")
     st.caption(f"Folder: {folder}")
     if selected_recipe.get("tags"):
         tags_display = ", ".join([f"🏷️ {tag}" for tag in selected_recipe.get("tags", [])])
@@ -64,6 +64,10 @@ def show_recipe_detail(data: dict) -> None:
         st.subheader("Instructions")
         st.markdown(format_instructions_for_display(selected_recipe["instructions"]))
 
+    if selected_recipe.get("notes"):
+        st.subheader("Notes & Tips")
+        st.info(selected_recipe["notes"])
+
     if selected_recipe.get("source_url"):
         st.markdown(f"[🔗 Original recipe]({selected_recipe['source_url']})")
 
@@ -80,6 +84,7 @@ def show_recipe_detail(data: dict) -> None:
         if st.button("🗑️ Delete recipe", key=f"delete_single_{folder}_{selected_idx}", width="stretch"):
             global_idx = data["recipes"].index(selected_recipe)
             data["recipes"].pop(global_idx)
+            refresh_folders(data)
             save_data(data)
             st.success("Recipe deleted.")
             st.query_params.clear()

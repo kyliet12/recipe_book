@@ -1,6 +1,6 @@
 import streamlit as st
 
-from data_helpers import save_data
+from data_helpers import refresh_folders, save_data
 from formatting_helpers import format_ingredients_for_display, format_instructions_for_display
 from ui_helpers import recipe_anchor_id, render_recipe_thumbnail_grid
 
@@ -83,6 +83,7 @@ def show_browse(data: dict) -> None:
                     if st.button("🗑️ Delete recipe", key=f"delete_{folder}_{i}", width="stretch"):
                         global_idx = data["recipes"].index(recipe)
                         data["recipes"].pop(global_idx)
+                        refresh_folders(data)
                         save_data(data)
                         st.success(f"Deleted '{recipe['name']}'.")
                         st.rerun()
