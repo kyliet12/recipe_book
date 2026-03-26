@@ -140,7 +140,7 @@ def _prepare_recipe_payload(values: dict, *, folder_error_message: str) -> tuple
         errors.append("Ingredients are required.")
     if not instructions_clean:
         errors.append("Instructions are required.")
-    if values["folder"] == "(no folders – create one first)":
+    if not values["folder"]:
         errors.append(folder_error_message)
 
     payload = {

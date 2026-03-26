@@ -5,14 +5,11 @@ import uuid
 import pandas as pd
 import streamlit as st
 from streamlit_gsheets import GSheetsConnection
-import uuid
-from pathlib import Path
 
 
 STATIC_DIR = Path("static")
 STATIC_DIR.mkdir(parents=True, exist_ok=True)
 SHEET_URL = "https://docs.google.com/spreadsheets/d/1NfkTKNIVhoKA9VhxyO8RjjtARfSSP3aC56QMAgOrNYc/edit"
-ttl_secrets = st.secrets["connections"]["gsheets"]
 
 @st.cache_data(ttl=3600)  # Cache for 1 hour to reduce load on Google Sheets
 def load_data() -> dict:
