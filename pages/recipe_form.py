@@ -2,7 +2,7 @@ import streamlit as st
 
 from data_helpers import refresh_folders, save_data, save_uploaded_image
 from formatting_helpers import normalize_ingredient_input
-from scraping_helpers import scrape_recipe_from_image, scrape_recipe_from_url
+from scraping_helpers import scrape_recipes_from_images, scrape_recipe_from_url
 
 
 def _render_recipe_fields(
@@ -167,15 +167,26 @@ def show_add_recipe(data: dict) -> None:
     """Form to add a new recipe (manual or via URL)."""
     st.title("Add New Recipe")
 
-    method = st.radio(
-        "How would you like to add the recipe?",
-        ["Enter details manually", "Import from a website URL", "Import from an image"],
-        horizontal=True,
-    )
+    # Keep import mode active while stepping through extracted recipes, including the final one
+    in_queue = bool(st.session_state.get("image_import_active", False))
 
-    prefill: dict = {}
+    if not in_queue:
+        method = st.radio(
+            "How would you like to add the recipe?",
+            ["Enter details manually", "Import from a website URL", "Import from images"],
+            horizontal=True,
+        )
+    else:
+        method = "Import from images" # Lock it in while processing queue
+        extracted_total = st.session_state.get("extracted_total", [])
+        remaining_queue = st.session_state.get("recipe_queue", [])
+        if extracted_total:
+            current_idx = len(extracted_total) - len(remaining_queue)
+            st.info(f"Reviewing recipe {current_idx} of {len(extracted_total)}")
 
-    if method == "Import from a website URL":
+    prefill: dict = st.session_state.get("prefill", {})
+
+    if method == "Import from a website URL" and not in_queue:
         url_input = st.text_input("Recipe URL", placeholder="https://www.example.com/recipe/...")
         if st.button("Fetch Recipe"):
             if not url_input.strip():
@@ -190,36 +201,74 @@ def show_add_recipe(data: dict) -> None:
                         st.error(f"⚠️ {exc}")
                         st.session_state.prefill = {}
         prefill = st.session_state.get("prefill", {})
-    elif method == "Import from an image":
-        recipe_image = st.file_uploader(
-            "Recipe image",
+    elif method == "Import from images" and not in_queue:
+        recipe_images = st.file_uploader(
+            "Upload all recipe photos (this can be for one or multiple recipes).\nSupported formats: PNG, JPG, JPEG, GIF, WEBP.",
             type=["png", "jpg", "jpeg", "gif", "webp"],
-            accept_multiple_files=False,
-            key="recipe_import_image",
-            help="Upload a photo or screenshot of a recipe card/page.",
+            accept_multiple_files=True,
+            key="recipe_multi_uploader",
+            help="Upload one or multiple images. You can group them below.",
         )
 
-        if st.button("Extract From Image"):
-            if recipe_image is None:
-                st.error("Please upload an image first.")
-            else:
-                with st.spinner("Reading the image and extracting recipe details…"):
-                    try:
-                        prefill = scrape_recipe_from_image(bytes(recipe_image.getbuffer()))
+        if recipe_images:
+            st.divider()
+            st.subheader("Group Your Images")
+            st.write("Assign each image to a recipe. By default, each image is processed as a separate recipe.")
 
-                        # Default to using the imported recipe photo as the recipe image.
-                        try:
-                            prefill["image"] = save_uploaded_image(recipe_image)
-                        except ValueError:
-                            # The OCR parse can still be useful even if image saving fails.
-                            pass
+            group_options = [f"Recipe {i+1}" for i in range(len(recipe_images))] + ["Ignore/Discard"]
+            
+            # Store the actual file objects so we can save them to Cloudinary later
+            image_groups = {option: [] for option in group_options}
 
-                        st.success("Recipe details extracted from image. Review and save below.")
-                        st.session_state.prefill = prefill
-                    except ValueError as exc:
-                        st.error(f"⚠️ {exc}")
-                        st.session_state.prefill = {}
-        prefill = st.session_state.get("prefill", {})
+            cols = st.columns(3)
+            for idx, img_file in enumerate(recipe_images):
+                with cols[idx % 3]:
+                    st.image(img_file, width="stretch")
+                    assigned_group = st.selectbox(
+                        f"Assign {img_file.name}",
+                        options=group_options,
+                        index=idx,
+                        key=f"assign_{idx}_{img_file.name}"
+                    )
+                    image_groups[assigned_group].append(img_file)
+
+            if st.button("Extract Assigned Recipes"):
+                valid_groups = {
+                    name: files for name, files in image_groups.items() 
+                    if name != "Ignore/Discard" and len(files) > 0
+                }
+                
+                if not valid_groups:
+                    st.warning("No images assigned to recipes!")
+                else:
+                    with st.spinner(f"Extracting {len(valid_groups)} recipe(s) from your images..."):
+                        all_extracted_recipes = []
+                        
+                        for group_name, files_in_group in valid_groups.items():
+                            try:
+                                image_bytes_list = [bytes(f.getbuffer()) for f in files_in_group]
+                                
+                                # combine=True because we pre-grouped them by recipe
+                                extracted_data = scrape_recipes_from_images(image_bytes_list, combine=True)
+                                
+                                if extracted_data:
+                                    # Try saving the first image of the group to Cloudinary
+                                    try:
+                                        extracted_data[0]["image"] = save_uploaded_image(files_in_group[0])
+                                    except Exception:
+                                        pass # If upload fails, continue without an image
+                                        
+                                    all_extracted_recipes.extend(extracted_data)
+                            except ValueError as exc:
+                                st.error(f"Failed to process {group_name}: {exc}")
+                        
+                        if all_extracted_recipes:
+                            st.session_state.image_import_active = True
+                            st.session_state.recipe_queue = all_extracted_recipes
+                            st.session_state.extracted_total = all_extracted_recipes.copy() # Keep track of total for UI
+                            st.session_state.prefill = st.session_state.recipe_queue.pop(0)
+                            st.success(f"Successfully extracted {len(all_extracted_recipes)} recipe(s)!")
+                            st.rerun()
 
     st.divider()
     st.subheader("Recipe Details")
@@ -229,7 +278,7 @@ def show_add_recipe(data: dict) -> None:
         data=data,
         form_key="recipe_form",
         submit_label="💾 Save Recipe",
-        uploader_label="Or upload an image file (will be securely hosted and saved to the recipe)",
+        uploader_label="",
         include_cancel=False,
     )
 
@@ -247,11 +296,21 @@ def show_add_recipe(data: dict) -> None:
             data["recipes"].append(recipe)
             refresh_folders(data)
             save_data(data)
-            st.session_state.prefill = {}
             st.success(f"✅ '{recipe['name']}' saved to '{recipe['folder']}'!")
-            st.session_state.page = "browse"
-            st.session_state.selected_folder = recipe["folder"]
-            st.rerun()
+            
+            # THE QUEUE ADVANCEMENT LOGIC
+            if "recipe_queue" in st.session_state and len(st.session_state.recipe_queue) > 0:
+                st.session_state.prefill = st.session_state.recipe_queue.pop(0)
+                st.rerun()
+            else:
+                # Cleanup and exit
+                st.session_state.prefill = {}
+                st.session_state.pop("recipe_queue", None)
+                st.session_state.pop("extracted_total", None)
+                st.session_state.pop("image_import_active", None)
+                st.session_state.page = "browse"
+                st.session_state.selected_folder = recipe["folder"]
+                st.rerun()
 
 
 def show_edit_recipe(data: dict) -> None:

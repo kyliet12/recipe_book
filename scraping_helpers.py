@@ -12,8 +12,8 @@ import requests
 
 from formatting_helpers import clean_time_string
 
-def scrape_recipe_from_image(image_file: bytes) -> dict:
-    """Extract recipe details and smart tags from an image using the Gemini API."""
+def scrape_recipes_from_images(image_files: list[bytes], combine: bool) -> list[dict]:
+    """Extract recipe(s) from a list of images using the Gemini API."""
     api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("API key not found. Please add GEMINI_API_KEY to your Streamlit secrets.")
@@ -21,24 +21,38 @@ def scrape_recipe_from_image(image_file: bytes) -> dict:
     client = genai.Client(api_key=api_key)
 
     try:
-        img = Image.open(BytesIO(image_file))
+        # Load all images into a list of PIL Images
+        imgs = [Image.open(BytesIO(img_bytes)) for img_bytes in image_files]
     except Exception as exc:
-        raise ValueError(f"Could not read the uploaded image: {exc}")
+        raise ValueError(f"Could not read one or more uploaded images: {exc}")
 
-    # UPDATED PROMPT: Added 'notes'
-    prompt = """
-    You are a helpful culinary assistant. Please look at this recipe image and extract the information into a structured JSON format. 
-    Return ONLY a raw JSON object and absolutely no markdown formatting or backticks. 
-    Use the exact following keys: 
-    'name', 'description', 'servings', 'prep_time', 'cook_time', 'ingredients', 'instructions', 'notes', 'tags'. 
+    # Determine the prompt based on the user's intent
+    if combine:
+        prompt_instruction = """
+        These images represent a SINGLE recipe spread across multiple pages/photos. 
+        Extract the information into ONE structured JSON object.
+        Return ONLY a raw JSON object (dict) and absolutely no markdown formatting.
+        """
+    else:
+        prompt_instruction = """
+        These images contain MULTIPLE distinct recipes. 
+        Extract EACH recipe you find into a separate object within a JSON array.
+        Return ONLY a raw JSON array (list of dicts) and absolutely no markdown formatting.
+        """
+
+    prompt = f"""
+    You are a helpful culinary assistant. {prompt_instruction}
+
+    Use the exact following keys for each recipe object: 
+    'name', 'description', 'image', 'servings', 'prep_time', 'cook_time', 'ingredients', 'instructions', 'notes', 'tags'. 
 
     CRITICAL TAGGING INSTRUCTIONS for the 'tags' key:
-    Read the instructions carefully to identify the cooking method and equipment. You MUST include tags for things like "sheet pan", "air fryer", "crock pot", "slow cooker", "instant pot", "one pot", or "grill" if they apply.  Also include general categories (e.g., "vegan", "dessert"). Do not include ingredients. Provide a JSON array of 2 to 4 lowercase strings.
+    Identify cooking method and equipment (e.g., "sheet pan", "slow cooker", "instant pot"). Also include general categories (e.g., "vegan", "dessert"). Provide a JSON array of 2 to 4 lowercase strings.
     
-    For 'ingredients', format it as a single string with each ingredient separated by a newline (\\n). 
-    For 'instructions', format it as a single string with numbered steps. 
-    For 'notes', extract any baker's tips, storage instructions, or substitutions. If none exist, leave it blank.
-    If any information is missing from the image, leave the value as an empty string ("").
+    For 'ingredients', format as a single string with each ingredient separated by a newline (\\n). 
+    For 'instructions', format as a single string with numbered steps. 
+    For 'notes', extract any baker's tips, storage instructions, or substitutions.
+    If any information is missing, leave the value as an empty string ("").
     """
 
     max_retries = 3
@@ -46,25 +60,32 @@ def scrape_recipe_from_image(image_file: bytes) -> dict:
 
     for attempt in range(max_retries):
         try:
+            # Pass the text prompt followed by all image objects
             response = client.models.generate_content(
                 model='gemini-2.5-flash',
-                contents=[prompt, img]
+                contents=[prompt] + imgs
             )
             
             text_response = response.text.strip()
             text_response = text_response.replace("```json", "").replace("```", "").strip()
-            recipe_data = json.loads(text_response)
             
-            # UPDATED KEYS: Added 'notes'
-            expected_keys = ["name", "description", "servings", "prep_time", "cook_time", "ingredients", "instructions", "notes", "tags"]
-            for key in expected_keys:
-                if key not in recipe_data:
-                    recipe_data[key] = [] if key == "tags" else ""
+            parsed_data = json.loads(text_response)
             
-            recipe_data["prep_time"] = clean_time_string(recipe_data.get("prep_time", ""))
-            recipe_data["cook_time"] = clean_time_string(recipe_data.get("cook_time", ""))
+            # Normalize to a list so the frontend always deals with a list of recipes
+            recipes = [parsed_data] if isinstance(parsed_data, dict) else parsed_data
+            
+            # Clean up keys for every recipe found
+            expected_keys = ["name", "description", "image", "servings", "prep_time", "cook_time", "ingredients", "instructions", "notes", "tags"]
+            for recipe_data in recipes:
+                for key in expected_keys:
+                    if key not in recipe_data:
+                        recipe_data[key] = [] if key == "tags" else ""
+                
+                recipe_data["prep_time"] = clean_time_string(recipe_data.get("prep_time", ""))
+                recipe_data["cook_time"] = clean_time_string(recipe_data.get("cook_time", ""))
+                recipe_data["folder"] = ""
                     
-            return recipe_data
+            return recipes
 
         except Exception as exc:
             error_msg = str(exc)
@@ -77,8 +98,7 @@ def scrape_recipe_from_image(image_file: bytes) -> dict:
                 else:
                     raise ValueError("The AI model is experiencing high traffic. Please wait a minute and try again.")
             else:
-                raise ValueError(f"Failed to extract recipe using the AI model: {exc}")
-
+                raise ValueError(f"Failed to extract recipe(s) using the AI model: {exc}")
 
 def scrape_recipe_from_url(url: str) -> dict:
     """Fetch a webpage and use Gemini to extract the recipe and smart tags."""
