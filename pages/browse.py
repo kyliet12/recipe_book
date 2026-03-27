@@ -74,16 +74,18 @@ def show_browse(data: dict) -> None:
                 action_cols = st.columns(2)
                 with action_cols[0]:
                     if st.button("✏️ Edit recipe", key=f"edit_{folder}_{i}", width="stretch"):
-                        global_idx = data["recipes"].index(recipe)
-                        st.session_state.edit_recipe_index = global_idx
-                        st.session_state.page = "edit_recipe"
-                        st.rerun()
+                        global_idx = data.get("recipe_id_map", {}).get(id(recipe), -1)
+                        if global_idx >= 0:
+                            st.session_state.edit_recipe_index = global_idx
+                            st.session_state.page = "edit_recipe"
+                            st.rerun()
 
                 with action_cols[1]:
                     if st.button("🗑️ Delete recipe", key=f"delete_{folder}_{i}", width="stretch"):
-                        global_idx = data["recipes"].index(recipe)
-                        data["recipes"].pop(global_idx)
-                        refresh_folders(data)
-                        save_data(data)
-                        st.success(f"Deleted '{recipe['name']}'.")
-                        st.rerun()
+                        global_idx = data.get("recipe_id_map", {}).get(id(recipe), -1)
+                        if global_idx >= 0:
+                            data["recipes"].pop(global_idx)
+                            refresh_folders(data)
+                            save_data(data)
+                            st.success(f"Deleted '{recipe['name']}'.")
+                            st.rerun()

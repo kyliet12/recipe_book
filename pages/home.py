@@ -11,7 +11,7 @@ def show_home(data: dict) -> None:
 
     cols = st.columns(3)
     for idx, folder in enumerate(data["folders"]):
-        count = sum(1 for r in data["recipes"] if r.get("folder") == folder)
+        count = data.get("folder_counts", {}).get(folder, 0)
         with cols[idx % 3]:
             if st.button(
                 f"📁 {folder}\n\n*{count} recipe{'s' if count != 1 else ''}*",

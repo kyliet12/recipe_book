@@ -15,8 +15,8 @@ def load_data() -> dict:
     """Fetch data from Google Sheets and convert to our dictionary format."""
     conn = st.connection("gsheets", type=GSheetsConnection)
     try:
-        # ttl=0 ensures we fetch fresh data instead of using a cached version
-        df = conn.read(spreadsheet=SHEET_URL, worksheet="recipes", ttl=0)
+        # Respect cache_data decorator by using the default ttl instead of ttl=0
+        df = conn.read(spreadsheet=SHEET_URL, worksheet="recipes")
         df = df.fillna("")  # Clean up empty cells
         
         recipes = df.to_dict(orient="records")
@@ -28,10 +28,14 @@ def load_data() -> dict:
             else:
                 r["tags"] = []
                 
-        # Dynamically build the folder list based on existing recipes
-        folders = list(set(r.get("folder", "") for r in recipes if r.get("folder")))
+        # Dynamically build the folder list and recipe counts based on existing recipes
+        folders = sorted(set(r.get("folder", "") for r in recipes if r.get("folder")))
+        folder_counts = {folder: sum(1 for r in recipes if r.get("folder") == folder) for folder in folders}
         
-        return {"recipes": recipes, "folders": folders}
+        # Create a recipe ID map for O(1) lookups instead of O(n) index() calls
+        recipe_id_map = {id(recipe): i for i, recipe in enumerate(recipes)}
+        
+        return {"recipes": recipes, "folders": folders, "folder_counts": folder_counts, "recipe_id_map": recipe_id_map}
         
     except Exception as e:
         # If the sheet is empty or fails, return an empty structure safely
@@ -53,8 +57,11 @@ def save_data(data: dict) -> None:
     
     # Update overwrites the sheet with the new dataframe
     conn.update(spreadsheet=SHEET_URL, worksheet="recipes", data=df)
-    st.cache_data.clear() # Force clear the cache so the next load is completely fresh
-
+    st.cache_data.clear()  # Clear cache so next load refreshes from Sheets
+    data["folders"] = sorted({r.get("folder", "") for r in data.get("recipes", []) if r.get("folder")})
+    data["folder_counts"] = {folder: sum(1 for r in data["recipes"] if r.get("folder") == folder) for folder in data["folders"]}
+    # Rebuild recipe_id_map after changes
+    data["recipe_id_map"] = {id(recipe): i for i, recipe in enumerate(data["recipes"])}
 
 def refresh_folders(data: dict) -> None:
     """Keep the in-memory folder list in sync with current recipes."""

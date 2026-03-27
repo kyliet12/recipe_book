@@ -33,7 +33,7 @@ def render_sidebar(data: dict) -> None:
             st.divider()
             st.subheader("Folders")
             for folder in data["folders"]:
-                count = sum(1 for r in data["recipes"] if r.get("folder") == folder)
+                count = data.get("folder_counts", {}).get(folder, 0)
                 label = f"📁 {folder} ({count})"
                 if st.button(label, key=f"sidebar_{folder}", use_container_width=True):
                     st.session_state.page = "browse"

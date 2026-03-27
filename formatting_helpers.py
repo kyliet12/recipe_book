@@ -1,6 +1,7 @@
 import re
 from decimal import Decimal, InvalidOperation
 from fractions import Fraction
+import streamlit as st
 
 
 def decimal_to_mixed_fraction(value: str) -> str:
@@ -27,6 +28,7 @@ def decimal_to_mixed_fraction(value: str) -> str:
     return f"{sign}{whole} {remainder}/{fraction.denominator}"
 
 
+@st.cache_data
 def format_ingredients_for_display(ingredients_text: str) -> str:
     """Convert decimal quantities in ingredient lines to fractions for display."""
     if not isinstance(ingredients_text, str):
@@ -76,6 +78,7 @@ def normalize_ingredient_input(ingredients_text: str) -> str:
 
     return format_ingredients_for_display("\n".join(normalized_lines))
 
+@st.cache_data
 
 def format_instructions_for_display(instructions_text: str) -> str:
     """Return instructions as markdown bullets when the text is plain paragraphs/lines."""

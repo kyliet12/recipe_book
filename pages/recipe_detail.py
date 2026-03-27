@@ -81,19 +81,21 @@ def show_recipe_detail(data: dict) -> None:
     action_cols = st.columns(2)
     with action_cols[0]:
         if st.button("✏️ Edit recipe", key=f"edit_single_{folder}_{selected_idx}", width="stretch"):
-            global_idx = data["recipes"].index(selected_recipe)
-            st.session_state.edit_recipe_index = global_idx
-            st.session_state.page = "edit_recipe"
-            st.rerun()
+            global_idx = data.get("recipe_id_map", {}).get(id(selected_recipe), -1)
+            if global_idx >= 0:
+                st.session_state.edit_recipe_index = global_idx
+                st.session_state.page = "edit_recipe"
+                st.rerun()
 
     with action_cols[1]:
         if st.button("🗑️ Delete recipe", key=f"delete_single_{folder}_{selected_idx}", width="stretch"):
-            global_idx = data["recipes"].index(selected_recipe)
-            data["recipes"].pop(global_idx)
-            refresh_folders(data)
-            save_data(data)
-            st.success("Recipe deleted.")
-            st.query_params.clear()
-            st.query_params["page"] = "browse"
-            st.query_params["folder"] = folder
-            st.rerun()
+            global_idx = data.get("recipe_id_map", {}).get(id(selected_recipe), -1)
+            if global_idx >= 0:
+                data["recipes"].pop(global_idx)
+                refresh_folders(data)
+                save_data(data)
+                st.success("Recipe deleted.")
+                st.query_params.clear()
+                st.query_params["page"] = "browse"
+                st.query_params["folder"] = folder
+                st.rerun()
