@@ -9,6 +9,7 @@ import html
 import streamlit as st
 from google import genai
 import requests
+from recipe_scrapers import scrape_html
 
 from formatting_helpers import clean_time_string
 
@@ -101,7 +102,7 @@ def scrape_recipes_from_images(image_files: list[bytes], combine: bool) -> list[
                 raise ValueError(f"Failed to extract recipe(s) using the AI model: {exc}")
 
 def scrape_recipe_from_url(url: str) -> dict:
-    """Fetch a webpage and use Gemini to extract the recipe and smart tags."""
+    """Fetch a webpage, attempt using web scraping first, then fall back to the Gemini API if needed."""
     parsed = urlparse(url)
     if parsed.scheme not in ("http", "https"):
         raise ValueError("Only http:// and https:// URLs are supported.")
@@ -121,12 +122,58 @@ def scrape_recipe_from_url(url: str) -> dict:
     except requests.exceptions.RequestException as exc:
         raise ValueError(f"Failed to fetch the URL: {exc}")
 
+    html_content = response.text
+
+    # --- Recipe Scraping Logic ---
+    try:
+        scraper = scrape_html(html_content, org_url=url)
+        
+        name = scraper.title()
+        ingredients_list = scraper.ingredients()
+        instructions_list = scraper.instructions_list()
+        
+        # Only proceed if we got the core requirements
+        if name and ingredients_list and instructions_list:
+            # Safely grab optional fields
+            def safe_get(func, default=""):
+                try:
+                    val = func()
+                    return str(val) if val else default
+                except Exception:
+                    return default
+
+            recipe_data = {
+                "name": name,
+                "description": safe_get(scraper.description),
+                "image": safe_get(scraper.image),
+                "servings": safe_get(scraper.yields),
+                "prep_time": safe_get(scraper.prep_time),
+                "cook_time": safe_get(scraper.cook_time),
+                "ingredients": "\n".join(ingredients_list),
+                # Ensure instructions are numbered
+                "instructions": "\n".join([f"{i+1}. {step}" for i, step in enumerate(instructions_list)]),
+                "notes": "", # Hard to extract reliably without AI
+                "tags": [],
+                "source_url": url,
+                "folder": ""
+            }
+            
+            recipe_data["prep_time"] = clean_time_string(recipe_data["prep_time"])
+            recipe_data["cook_time"] = clean_time_string(recipe_data["cook_time"])
+            
+            return recipe_data
+            
+    except Exception as e:
+        # If the scraper fails or the site isn't supported, we silently catch it and move to Gemini
+        print(f"Standard scraping failed or incomplete, falling back to Gemini... ({e})")
+
+    # --- Gemini API Logic ---
     api_key = st.secrets.get("GEMINI_API_KEY") or os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("API key not found.")
 
     client = genai.Client(api_key=api_key)
-    html_content = html.unescape(response.text[:100000])
+    cleaned_html = html.unescape(html_content[:100000])
 
     prompt = f"""
     You are a helpful culinary assistant. I am providing you with the raw HTML/text of a food blog webpage.
@@ -144,7 +191,7 @@ def scrape_recipe_from_url(url: str) -> dict:
     If any information is missing, leave the value as an empty string ("").
 
     WEBPAGE CONTENT:
-    {html_content}
+    {cleaned_html}
     """
 
     max_retries = 3
