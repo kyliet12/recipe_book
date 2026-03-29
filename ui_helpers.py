@@ -1,8 +1,86 @@
 import html
+from pathlib import Path
 import re
 from urllib.parse import urlencode
 
 import streamlit as st
+
+
+def _image_src_for_html(image_path_or_url: object) -> str:
+    """Convert a stored image value to a browser-usable src, if possible."""
+    raw = str(image_path_or_url or "").strip()
+    if not raw:
+        return ""
+
+    if raw.startswith(("http://", "https://", "/app/static/")):
+        return html.escape(raw)
+
+    if raw.startswith("static/"):
+        local_path = Path(raw)
+        if local_path.exists():
+            filename = raw.replace("static/", "", 1)
+            return f"/app/static/{html.escape(filename)}"
+        return ""
+
+    return html.escape(raw)
+
+
+def render_recipe_inline_thumbnail(image_path_or_url: object) -> None:
+    """Render a fixed-size thumbnail. Missing/broken images remain a blank box."""
+    src = _image_src_for_html(image_path_or_url)
+    image_html = ""
+    if src:
+        image_html = (
+            f"<img src=\"{src}\" alt=\"Recipe thumbnail\" "
+            "onerror=\"this.remove();\" />"
+        )
+
+    st.markdown(
+        (
+            "<div class='recipe-inline-thumb'>"
+            f"{image_html}"
+            "</div>"
+            "<style>"
+            ".recipe-inline-thumb {"
+            "width: 120px;"
+            "aspect-ratio: 4 / 3;"
+            "border-radius: 0.5rem;"
+            "overflow: hidden;"
+            "background: rgba(200, 200, 200, 0.15);"
+            "}"
+            ".recipe-inline-thumb img {"
+            "width: 100%;"
+            "height: 100%;"
+            "display: block;"
+            "object-fit: cover;"
+            "}"
+            "</style>"
+        ),
+        unsafe_allow_html=True,
+    )
+
+
+def render_recipe_detail_image(image_path_or_url: object) -> None:
+    """Render a detail image only when available; remove it if loading fails."""
+    src = _image_src_for_html(image_path_or_url)
+    if not src:
+        return
+
+    st.markdown(
+        (
+            f"<img class='recipe-detail-image' src=\"{src}\" alt=\"Recipe image\" "
+            "onerror=\"this.remove();\" />"
+            "<style>"
+            ".recipe-detail-image {"
+            "width: 100%;"
+            "border-radius: 0.75rem;"
+            "display: block;"
+            "margin-bottom: 0.75rem;"
+            "}"
+            "</style>"
+        ),
+        unsafe_allow_html=True,
+    )
 
 
 def recipe_anchor_id(recipe: dict, idx: int) -> str:
@@ -50,12 +128,23 @@ def render_recipe_thumbnail_grid(folder_recipes: list[dict], folder: str) -> Non
                 object-fit: cover;
                 display: block;
             }
+            .recipe-thumb-wrap {
+                width: 100%;
+                aspect-ratio: 4 / 3;
+                position: relative;
+                overflow: hidden;
+                background: rgba(200, 200, 200, 0.15);
+            }
             .recipe-thumb-placeholder {
                 background: rgba(200, 200, 200, 0.15);
                 color: rgba(120, 120, 120, 0.95);
                 display: grid;
                 place-items: center;
                 font-size: 0.85rem;
+            }
+            .recipe-thumb-wrap img {
+                position: absolute;
+                inset: 0;
             }
             .recipe-card-title {
                 padding: 0.55rem 0.7rem 0.65rem 0.7rem;
@@ -75,21 +164,33 @@ def render_recipe_thumbnail_grid(folder_recipes: list[dict], folder: str) -> Non
         image_path_or_url = str(recipe.get("image", "")).strip()
         query = urlencode({"page": "recipe", "folder": folder, "recipe": anchor})
 
-        thumb = "<div class='recipe-thumb-placeholder'>No image</div>"
+        thumb = "<div class='recipe-thumb-wrap'><div class='recipe-thumb-placeholder'></div></div>"
 
         if image_path_or_url:
             # If it's an external web URL, use it directly
             if image_path_or_url.startswith(("http://", "https://")):
                 img_src = html.escape(image_path_or_url)
-                thumb = f"<img src=\"{img_src}\" alt=\"{title}\" />"
+                thumb = (
+                    "<div class='recipe-thumb-wrap'>"
+                    "<div class='recipe-thumb-placeholder'></div>"
+                    f"<img src=\"{img_src}\" alt=\"{title}\" onerror=\"this.remove();\" />"
+                    "</div>"
+                )
             
             # If it's a local file in our static folder
             elif image_path_or_url.startswith("static/"):
                 # Streamlit serves files from the 'static' folder at the '/app/static/' URL path
                 # We strip the "static/" prefix from the local path to avoid duplication
-                filename = image_path_or_url.replace("static/", "", 1)
-                img_src = f"/app/static/{filename}"
-                thumb = f"<img src=\"{img_src}\" alt=\"{title}\" />"
+                local_path = Path(image_path_or_url)
+                if local_path.exists():
+                    filename = image_path_or_url.replace("static/", "", 1)
+                    img_src = f"/app/static/{html.escape(filename)}"
+                    thumb = (
+                        "<div class='recipe-thumb-wrap'>"
+                        "<div class='recipe-thumb-placeholder'></div>"
+                        f"<img src=\"{img_src}\" alt=\"{title}\" onerror=\"this.remove();\" />"
+                        "</div>"
+                    )
 
         cards.append(
             (

@@ -2,7 +2,7 @@ import streamlit as st
 
 from data_helpers import refresh_folders, save_data
 from formatting_helpers import format_ingredients_for_display, format_instructions_for_display
-from ui_helpers import get_query_param_value, recipe_anchor_id
+from ui_helpers import get_query_param_value, recipe_anchor_id, render_recipe_detail_image
 
 
 def show_recipe_detail(data: dict) -> None:
@@ -42,8 +42,7 @@ def show_recipe_detail(data: dict) -> None:
         st.query_params["folder"] = folder
         st.rerun()
 
-    if selected_recipe.get("image"):
-        st.image(selected_recipe["image"], width="stretch")
+    render_recipe_detail_image(selected_recipe.get("image"))
 
     if selected_recipe.get("description"):
         st.markdown(f"*{selected_recipe['description']}*")

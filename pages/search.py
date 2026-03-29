@@ -1,7 +1,12 @@
 import streamlit as st
 
 from formatting_helpers import format_ingredients_for_display, format_instructions_for_display
-from ui_helpers import recipe_anchor_id, render_recipe_thumbnail_grid
+from ui_helpers import (
+    recipe_anchor_id,
+    render_recipe_detail_image,
+    render_recipe_inline_thumbnail,
+    render_recipe_thumbnail_grid,
+)
 
 
 def show_search(data: dict) -> None:
@@ -66,10 +71,7 @@ def show_search(data: dict) -> None:
                     top_cols = st.columns([1, 4])
 
                     with top_cols[0]:
-                        if recipe.get("image"):
-                            st.image(recipe["image"], width=120)
-                        else:
-                            st.caption("No image")
+                        render_recipe_inline_thumbnail(recipe.get("image"))
 
                     with top_cols[1]:
                         st.markdown(f"### {recipe['name']}")
@@ -79,8 +81,7 @@ def show_search(data: dict) -> None:
                             st.caption(tags_display)
 
                     with st.expander("View recipe details", expanded=False):
-                        if recipe.get("image"):
-                            st.image(recipe["image"], width="stretch")
+                        render_recipe_detail_image(recipe.get("image"))
 
                         if recipe.get("description"):
                             st.markdown(f"*{recipe['description']}*")
